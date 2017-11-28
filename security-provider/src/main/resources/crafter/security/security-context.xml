@@ -96,13 +96,13 @@
     <!-- ////////////////////////////////// -->
 
     <!-- Order of the processors is important, so if you need to override this bean try to maintain a similar order -->
-    <bean id="crafter.securityFilter" class="org.craftercms.security.servlet.filters.RequestSecurityFilter">
-        <property name="securityProcessors" ref="crafter.securityProcessors"/>
-        <property name="urlsToInclude" value="${crafter.security.urlsToInclude}"/>
-        <property name="urlsToExclude" value="${crafter.security.urlsToExclude}"/>
+    <bean id="crafter.webSecurityFilter" class="org.craftercms.security.servlet.filters.RequestSecurityFilter">
+        <property name="securityProcessors" ref="crafter.webSecurityProcessors"/>
+        <property name="urlsToInclude" value="${crafter.security.web.urlsToInclude}"/>
+        <property name="urlsToExclude" value="${crafter.security.web.urlsToExclude}"/>
     </bean>
 
-    <util:list id="crafter.securityProcessors">
+    <util:list id="crafter.webSecurityProcessors">
         <ref bean="crafter.addSecurityCookiesProcessor"/>
         <ref bean="crafter.currentAuthenticationResolvingProcessor"/>
         <ref bean="crafter.returnCurrentAuthenticationProcessor"/>
@@ -112,6 +112,25 @@
         <ref bean="crafter.mellonAutoLoginProcessor"/>
         <ref bean="crafter.saveRequestAwareProcessor"/>
         <ref bean="crafter.securityExceptionProcessor"/>
+        <ref bean="crafter.urlAccessRestrictionCheckingProcessor"/>
+    </util:list>
+
+    <bean id="crafter.restSecurityFilter" class="org.craftercms.security.servlet.filters.RequestSecurityFilter">
+        <property name="securityProcessors" ref="crafter.restSecurityProcessors"/>
+        <property name="urlsToInclude" value="${crafter.security.rest.urlsToInclude}"/>
+        <property name="urlsToExclude" value="${crafter.security.rest.urlsToExclude}"/>
+    </bean>
+
+    <util:list id="crafter.restSecurityProcessors">
+        <ref bean="crafter.addSecurityCookiesProcessor"/>
+        <ref bean="crafter.currentAuthenticationResolvingProcessor"/>
+        <ref bean="crafter.returnCurrentAuthenticationProcessor"/>
+        <ref bean="crafter.restLoginProcessor"/>
+        <ref bean="crafter.restLogoutProcessor"/>
+        <ref bean="crafter.rememberMeAutoLoginProcessor"/>
+        <ref bean="crafter.mellonAutoLoginProcessor"/>
+        <ref bean="crafter.saveRequestAwareProcessor"/>
+        <ref bean="crafter.restSecurityExceptionProcessor"/>
         <ref bean="crafter.urlAccessRestrictionCheckingProcessor"/>
     </util:list>
 
@@ -194,10 +213,19 @@
         <property name="loginFailureHandler" ref="crafter.loginFailureHandler"/>
     </bean>
 
+    <bean id="crafter.restLoginProcessor" parent="crafter.loginProcessor">
+        <property name="loginSuccessHandler" ref="crafter.restLoginSuccessHandler"/>
+        <property name="loginFailureHandler" ref="crafter.restLoginFailureHandler"/>
+    </bean>
+
     <bean id="crafter.logoutProcessor" class="org.craftercms.security.processors.impl.LogoutProcessor">
         <property name="authenticationManager" ref="crafter.authenticationManager"/>
         <property name="logoutSuccessHandler" ref="crafter.logoutSuccessHandler"/>
         <property name="rememberMeManager" ref="crafter.rememberMeManager"/>
+    </bean>
+
+    <bean id="crafter.restLogoutProcessor" parent="crafter.logoutProcessor">
+        <property name="logoutSuccessHandler" ref="crafter.restLogoutSuccessHandler"/>
     </bean>
 
     <bean id="crafter.saveRequestAwareProcessor"
@@ -207,6 +235,11 @@
           class="org.craftercms.security.processors.impl.SecurityExceptionProcessor">
         <property name="authenticationRequiredHandler" ref="crafter.authenticationRequiredHandler"/>
         <property name="accessDeniedHandler" ref="crafter.accessDeniedHandler"/>
+    </bean>
+
+    <bean id="crafter.restSecurityExceptionProcessor" parent="crafter.securityExceptionProcessor">
+        <property name="authenticationRequiredHandler" ref="crafter.restAuthenticationRequiredHandler"/>
+        <property name="accessDeniedHandler" ref="crafter.restAccessDeniedHandler"/>
     </bean>
 
     <bean id="crafter.urlAccessRestrictionCheckingProcessor"
@@ -245,17 +278,37 @@
         <property name="alwaysUseDefaultTargetUrl" value="${crafter.security.login.success.alwaysUseDefaultUrl}"/>
     </bean>
 
+    <bean id="crafter.restLoginSuccessHandler"
+          class="org.craftercms.security.authentication.impl.RestLoginSuccessHandler">
+        <property name="responseWriter" ref="crafter.restResponseWriter"/>
+    </bean>
+
     <bean id="crafter.loginFailureHandler" class="org.craftercms.security.authentication.impl.LoginFailureHandlerImpl">
         <property name="targetUrl" value="${crafter.security.login.failure.url}"/>
+    </bean>
+
+    <bean id="crafter.restLoginFailureHandler"
+          class="org.craftercms.security.authentication.impl.RestLoginFailureHandler">
+        <property name="responseWriter" ref="crafter.restResponseWriter"/>
     </bean>
 
     <bean id="crafter.logoutSuccessHandler" class="org.craftercms.security.authentication.impl.LogoutSuccessHandlerImpl">
         <property name="targetUrl" value="${crafter.security.logout.success.url}"/>
     </bean>
 
+    <bean id="crafter.restLogoutSuccessHandler"
+          class="org.craftercms.security.authentication.impl.RestLogoutSuccessHandler">
+        <property name="responseWriter" ref="crafter.restResponseWriter"/>
+    </bean>
+
     <bean id="crafter.authenticationRequiredHandler"
           class="org.craftercms.security.authentication.impl.AuthenticationRequiredHandlerImpl">
         <property name="loginFormUrl" value="${crafter.security.login.form.url}"/>
+    </bean>
+
+    <bean id="crafter.restAuthenticationRequiredHandler"
+          class="org.craftercms.security.authentication.impl.RestAuthenticationRequiredHandler">
+        <property name="responseWriter" ref="crafter.restResponseWriter"/>
     </bean>
 
     <!-- ////////////////////////////////// -->
@@ -280,6 +333,11 @@
 
     <bean id="crafter.accessDeniedHandler" class="org.craftercms.security.authorization.impl.AccessDeniedHandlerImpl">
         <property name="errorPageUrl" value="${crafter.security.accessDenied.error.url}"/>
+    </bean>
+
+    <bean id="crafter.restAccessDeniedHandler"
+          class="org.craftercms.security.authorization.impl.RestAccessDeniedHandler">
+        <property name="responseWriter" ref="crafter.restResponseWriter"/>
     </bean>
 
     <!-- ////////////////////////////////// -->
